@@ -10,6 +10,19 @@ from pydantic import BaseModel, Field
 import pandas as pd
 import numpy as np
 
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows requests from Vercel (or restrict to your Vercel domain)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 from ml_engine import (
     train_classification_model,
     run_kmeans_clustering,

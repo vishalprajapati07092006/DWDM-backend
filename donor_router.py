@@ -12,7 +12,8 @@ Endpoints:
       -> inserts one donor into dim_donor, dim_eligibility (reused or created),
          and fact_donations. Returns the created donor_id.
 """
-
+from fastapi import Depends
+from auth import get_current_user
 from datetime import date
 from typing import Optional
 
@@ -68,7 +69,7 @@ class DonorCreateResponse(BaseModel):
 
 # ---------------- Endpoint ----------------
 @router.post("", response_model=DonorCreateResponse, status_code=201)
-def add_donor(payload: DonorCreate):
+def add_donor(payload: DonorCreate ,current_user: dict = Depends(get_current_user)):
     db = SessionLocal()
     try:
         # 1. Duplicate check

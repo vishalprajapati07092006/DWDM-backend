@@ -23,6 +23,17 @@ from ml_engine import (
     DATASET_CAVEAT,
 )
 
+from auth import (
+    init_users_table,
+    authenticate_user,
+    create_access_token,
+    get_current_user,
+    Token,
+    UserOut,
+)
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordRequestForm
+
 ml_registry = {}
 PR_CURVE_PATH = "pr_curve.json"
 
@@ -193,6 +204,7 @@ def _mine_and_select_curated_rules(min_support=0.001, min_confidence=0.1):
 async def lifespan(app: FastAPI):
     print("🔄 Initializing Analytics Engine: Running Programmatic Threshold Optimization...")
     try:
+        init_users_table()          
         clf_artifacts = train_classification_model(beta=1.5, save_pr_curve_path=PR_CURVE_PATH)
         ml_registry["clf_model"] = clf_artifacts["model"]
         ml_registry["clf_metrics"] = clf_artifacts["metrics"]
@@ -385,3 +397,20 @@ def predict_donor_return(payload: PredictRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Inference Failure: {str(e)}")
+    
+    # ============================================================
+# AUTH ENDPOINTS
+# ============================================================
+@app.post("/api/auth/login", response_model=Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+
+    token = create_access_token({"sub": user["username"]})
+    return Token(access_token=token, username=user["username"])
+
+
+@app.get("/api/auth/me", response_model=UserOut)
+def me(current_user: dict = Depends(get_current_user)):
+    return UserOut(id=current_user["id"], username=current_user["username"])

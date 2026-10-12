@@ -8,8 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 import pandas as pd
 import numpy as np
+ 
 
 from olap_router import router as olap_router
+from donor_router import router as donor_router 
+
 from ml_engine import (
     train_classification_model,
     run_kmeans_clustering,
@@ -220,6 +223,7 @@ app.add_middleware(
 )
 
 app.include_router(olap_router)
+app.include_router(donor_router)
 
 
 # --- Data Models ---
